@@ -6,6 +6,10 @@ pipeline {
         maven 'maven3'
     }
 
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
+    }
+
     stages {
 
         stage('Git Checkout') {
@@ -28,5 +32,26 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh '''
+                    $SCANNER_HOME/bin/sonar-scanner \
+                    -Dsonar.projectKey=ECommerce-App \
+                    -Dsonar.projectName=ECommerce-App \
+                    -Dsonar.sources=src \
+                    -Dsonar.java.binaries=target/classes
+                    '''
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
     }
 }
