@@ -10,7 +10,7 @@ pipeline {
 
         stage('Git Checkout') {
             steps {
-                git branch: 'main',
+                git branch: 'master',
                 url: 'https://github.com/ab-inand/Ecommerce-App-.git'
             }
         }
