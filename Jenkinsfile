@@ -109,18 +109,6 @@ pipeline {
         }
     }
 }
-        stage('Deploy Container') {
-    steps {
-        sh '''
-        docker stop ecommerce-app || true
-        docker rm ecommerce-app || true
-
-        docker run -d \
-            --name ecommerce-app \
-            -p 8083:8080 \
-            abhi888a/ecommerce-app:latest
-        '''
-    }
-}
+    
     }
 }
