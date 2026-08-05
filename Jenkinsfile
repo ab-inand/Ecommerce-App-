@@ -100,15 +100,7 @@ pipeline {
         archiveArtifacts artifacts: 'trivy-image-report.txt', fingerprint: true
     }
 }
-        stage('Push Docker Image') {
-    steps {
-        script {
-            docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
-                sh 'docker push abhi888a/ecommerce-app:latest'
-            }
-        }
-    }
-}
+       
     
     }
 }
