@@ -81,5 +81,12 @@ pipeline {
         archiveArtifacts artifacts: 'trivy-fs-report.txt', fingerprint: true
     }
 }
+        stage('Docker Build') {
+    steps {
+        script {
+            sh 'docker build -t abhi888a/ecommerce-app:latest .'
+        }
+    }
+}
     }
 }
