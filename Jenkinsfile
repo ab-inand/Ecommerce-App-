@@ -88,5 +88,17 @@ pipeline {
         }
     }
 }
+        stage('Trivy Docker Image Scan') {
+    steps {
+        sh '''
+        trivy image \
+        --severity HIGH,CRITICAL \
+        --format table \
+        -o trivy-image-report.txt \
+        abhi888a/ecommerce-app:latest
+        '''
+        archiveArtifacts artifacts: 'trivy-image-report.txt', fingerprint: true
+    }
+}
     }
 }
