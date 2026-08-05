@@ -70,5 +70,16 @@ pipeline {
         }
     }
 }
+        stage('Trivy File System Scan') {
+    steps {
+        sh '''
+        trivy fs \
+        --format table \
+        --output trivy-fs-report.txt \
+        .
+        '''
+        archiveArtifacts artifacts: 'trivy-fs-report.txt', fingerprint: true
+    }
+}
     }
 }
