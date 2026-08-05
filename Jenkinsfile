@@ -59,5 +59,16 @@ pipeline {
                 sh 'mvn package -DskipTests'
                 }
         }
+        stage('Publish to Nexus') {
+    steps {
+        withMaven(
+            globalMavenSettingsConfig: 'maven-setting',
+            jdk: 'jdk17',
+            maven: 'maven3'
+        ) {
+            sh 'mvn deploy -DskipTests'
+        }
+    }
+}
     }
 }
