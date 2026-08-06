@@ -149,71 +149,40 @@ pipeline {
         }
 
         stage('Deploy To Kubernetes') {
+    steps {
+        sh '''
+        kubectl apply -f deployment-service.yaml
 
-            steps {
-
-                withKubeConfig(
-                        credentialsId: 'k8-token',
-                        serverUrl: "${K8S_SERVER}",
-                        clusterName: "${K8S_CLUSTER}",
-                        namespace: "${K8S_NAMESPACE}"
-                ) {
-
-                    sh '''
-                    kubectl apply -f deployment-service.yaml
-
-                    kubectl rollout status deployment/ecommerce-deployment -n webapps --timeout=180s
-                    '''
-                }
-            }
-        }
+        kubectl rollout status deployment/ecommerce-deployment \
+        -n webapps \
+        --timeout=180s
+        '''
+    }
+}
 
         stage('Verify Deployment') {
+    steps {
+        sh '''
+        echo "Pods"
+        kubectl get pods -n webapps
 
-            steps {
+        echo "Services"
+        kubectl get svc -n webapps
 
-                withKubeConfig(
-                        credentialsId: 'k8-token',
-                        serverUrl: "${K8S_SERVER}",
-                        clusterName: "${K8S_CLUSTER}",
-                        namespace: "${K8S_NAMESPACE}"
-                ) {
-
-                    sh '''
-                    echo "Pods"
-
-                    kubectl get pods -n webapps
-
-                    echo "Services"
-
-                    kubectl get svc -n webapps
-
-                    echo "Deployment"
-
-                    kubectl get deployment -n webapps
-                    '''
-                }
-            }
-        }
+        echo "Deployment"
+        kubectl get deployment -n webapps
+        '''
+    }
+}
 
         stage('Rolling Restart') {
+    steps {
+        sh '''
+        kubectl rollout restart deployment ecommerce-deployment -n webapps
 
-            steps {
-
-                withKubeConfig(
-                        credentialsId: 'k8-token',
-                        serverUrl: "${K8S_SERVER}",
-                        clusterName: "${K8S_CLUSTER}",
-                        namespace: "${K8S_NAMESPACE}"
-                ) {
-
-                    sh '''
-                    kubectl rollout restart deployment ecommerce-deployment -n webapps
-
-                    kubectl rollout status deployment ecommerce-deployment -n webapps
-                    '''
-                }
-            }
-        }
+        kubectl rollout status deployment ecommerce-deployment -n webapps
+        '''
+    }
+}
     }
 }
