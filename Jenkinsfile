@@ -21,7 +21,7 @@ pipeline {
         K8S_NAMESPACE = "webapps"
         DEPLOYMENT_NAME = "ecommerce-deployment"
 
-        K8S_SERVER = "https://YOUR-EKS-ENDPOINT"
+        K8S_SERVER = "https://43F4353F25F57F9DC7DEBFB48B039EC7.yl4.ap-south-1.eks.amazonaws.com"
     }
 
     stages {
