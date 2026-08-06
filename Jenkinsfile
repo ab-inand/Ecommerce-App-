@@ -14,14 +14,7 @@ pipeline {
 
     environment {
         SCANNER_HOME = tool 'sonar-scanner'
-
         DOCKER_IMAGE = "abhi888a/ecommerce-app:latest"
-
-        K8S_CLUSTER = "kastro-eks"
-        K8S_NAMESPACE = "webapps"
-        DEPLOYMENT_NAME = "ecommerce-deployment"
-
-        K8S_SERVER = "https://43F4353F25F57F9DC7DEBFB48B039EC7.yl4.ap-south-1.eks.amazonaws.com"
     }
 
     stages {
@@ -29,7 +22,7 @@ pipeline {
         stage('Git Checkout') {
             steps {
                 git branch: 'master',
-                url: 'https://github.com/ab-inand/Ecommerce-App-.git'
+                    url: 'https://github.com/ab-inand/Ecommerce-App-.git'
             }
         }
 
@@ -51,7 +44,6 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-
                     sh """
                     ${SCANNER_HOME}/bin/sonar-scanner \
                     -Dsonar.projectKey=ECommerce-App \
@@ -65,7 +57,7 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time:5, unit:'MINUTES') {
+                timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -73,7 +65,7 @@ pipeline {
 
         stage('Package') {
             steps {
-                sh 'mvn package -DskipTests'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
@@ -93,22 +85,23 @@ pipeline {
             steps {
                 sh '''
                 trivy fs \
-                --severity HIGH,CRITICAL \
-                --format table \
-                --output trivy-fs-report.txt \
-                .
+                  --severity HIGH,CRITICAL \
+                  --format table \
+                  --output trivy-fs-report.txt \
+                  .
                 '''
 
-                archiveArtifacts artifacts:'trivy-fs-report.txt', fingerprint:true
+                archiveArtifacts artifacts: 'trivy-fs-report.txt', fingerprint: true
             }
         }
 
         stage('Docker Build') {
             steps {
                 script {
-
-                    withDockerRegistry(credentialsId:'dockerhub') {
-
+                    withDockerRegistry(
+                        url: 'https://index.docker.io/v1/',
+                        credentialsId: 'dockerhub'
+                    ) {
                         sh """
                         docker build -t ${DOCKER_IMAGE} .
                         """
@@ -119,27 +112,25 @@ pipeline {
 
         stage('Trivy Docker Image Scan') {
             steps {
-
                 sh """
                 trivy image \
-                --severity HIGH,CRITICAL \
-                --format table \
-                --output trivy-image-report.txt \
-                ${DOCKER_IMAGE}
+                  --severity HIGH,CRITICAL \
+                  --format table \
+                  --output trivy-image-report.txt \
+                  ${DOCKER_IMAGE}
                 """
 
-                archiveArtifacts artifacts:'trivy-image-report.txt', fingerprint:true
+                archiveArtifacts artifacts: 'trivy-image-report.txt', fingerprint: true
             }
         }
 
         stage('Push Docker Image') {
-
             steps {
-
                 script {
-
-                    withDockerRegistry(credentialsId:'dockerhub') {
-
+                    withDockerRegistry(
+                        url: 'https://index.docker.io/v1/',
+                        credentialsId: 'dockerhub'
+                    ) {
                         sh """
                         docker push ${DOCKER_IMAGE}
                         """
@@ -149,40 +140,70 @@ pipeline {
         }
 
         stage('Deploy To Kubernetes') {
-    steps {
-        sh '''
-        kubectl apply -f deployment-service.yaml
+            steps {
+                sh '''
+                echo "Deploying to Kubernetes..."
 
-        kubectl rollout status deployment/ecommerce-deployment \
-        -n webapps \
-        --timeout=180s
-        '''
-    }
-}
+                kubectl apply -f deployment-service.yaml -n webapps
+
+                kubectl rollout status deployment/ecommerce-deployment \
+                    -n webapps \
+                    --timeout=180s
+                '''
+            }
+        }
 
         stage('Verify Deployment') {
-    steps {
-        sh '''
-        echo "Pods"
-        kubectl get pods -n webapps
+            steps {
+                sh '''
+                echo "========== PODS =========="
+                kubectl get pods -n webapps
 
-        echo "Services"
-        kubectl get svc -n webapps
+                echo "========== SERVICES =========="
+                kubectl get svc -n webapps
 
-        echo "Deployment"
-        kubectl get deployment -n webapps
-        '''
-    }
-}
+                echo "========== DEPLOYMENT =========="
+                kubectl get deployment -n webapps
+
+                echo "========== NODES =========="
+                kubectl get nodes
+                '''
+            }
+        }
 
         stage('Rolling Restart') {
-    steps {
-        sh '''
-        kubectl rollout restart deployment ecommerce-deployment -n webapps
+            steps {
+                sh '''
+                echo "Restarting Deployment..."
 
-        kubectl rollout status deployment ecommerce-deployment -n webapps
-        '''
+                kubectl rollout restart deployment/ecommerce-deployment -n webapps
+
+                kubectl rollout status deployment/ecommerce-deployment \
+                    -n webapps \
+                    --timeout=180s
+
+                kubectl get pods -n webapps
+                '''
+            }
+        }
     }
-}
+
+    post {
+
+        success {
+            echo '======================================'
+            echo 'Pipeline Executed Successfully'
+            echo '======================================'
+        }
+
+        failure {
+            echo '======================================'
+            echo 'Pipeline Failed'
+            echo '======================================'
+        }
+
+        always {
+            cleanWs()
+        }
     }
 }
