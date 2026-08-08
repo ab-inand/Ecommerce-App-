@@ -1,8 +1,1 @@
-REMOVED: This file contained sensitive credentials and deployment tokens. The file content was removed from the current commit to prevent further exposure. If you need to permanently erase these secrets from the repository history, follow the repository history purge steps (BFG or git filter-repo) and force-push — and rotate any affected credentials immediately.
 
-IMPORTANT IMMEDIATE ACTIONS:
-- Rotate any AWS access keys that appeared in the file.
-- Revoke and regenerate any tokens (SonarQube, Kubernetes, DockerHub, Nexus, Gmail app passwords) that may have been exposed.
-- Update any secrets stored in CI/CD (Jenkins credentials) with new values.
-
-If you want, I can provide the exact commands to purge this file from history and create the necessary branch/PR; tell me how you'd like to proceed.
